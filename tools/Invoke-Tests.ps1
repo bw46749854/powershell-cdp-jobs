@@ -96,9 +96,11 @@ if ($Suite -in @('All', 'Js')) {
         $exitCode = 1
     }
     else {
+        # Node.js 22 以降の --test はディレクトリを受け付けないため、テストファイルを明示して渡す。
+        $testFiles = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'tests/js') -Filter '*.test.js' -File | Sort-Object Name | ForEach-Object { $_.FullName })
         Push-Location $repositoryRoot
         try {
-            & $node.Source --test (Join-Path 'tests' 'js')
+            & $node.Source --test @testFiles
             if ($LASTEXITCODE -ne 0) { $exitCode = 1 }
         }
         finally {
