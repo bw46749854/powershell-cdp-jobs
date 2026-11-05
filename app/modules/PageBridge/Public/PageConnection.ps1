@@ -50,7 +50,7 @@ function Open-PageConnection {
         & $identify -Target $Target -Context $probeContext
     }.GetNewClosure()
 
-    $targets = @(Get-CdpPageTargets -Transport $Transport -DebuggerUrl $DebuggerUrl)
+    $targets = @(Get-CdpPageTargets -Transport $Transport -DebuggerUrl $DebuggerUrl -TimeoutSeconds $ConnectTimeoutSeconds)
     $target = Select-IdentifiedPageTarget -Targets $targets -Probe $probe -Log $Log
 
     $session = Open-CdpSession `

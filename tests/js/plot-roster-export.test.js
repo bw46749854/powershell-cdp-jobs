@@ -134,3 +134,10 @@ test('requires a finished document for the initial contract', async () => {
     Object.defineProperty(page.document, 'readyState', { value: 'interactive', configurable: true });
     assert.deepEqual(failedChecks(page.roster.checkInitialScreen()), ['initial.document.ready']);
 });
+
+// docs/guides/changing-page-contracts.md の例と同じテスト（文書の例が実際に成り立つことも確かめる）
+test('does not accept the export screen when the task button is renamed (meaning differs)', async () => {
+    const page = await loadPage({ html: greenhouseConsoleHtml().replace('>操作<', '>アクション<'), scripts: SCRIPTS.plotRosterExport });
+    const result = page.helper('plotRosterExport').checkExportScreen();
+    assert.deepEqual(failedChecks(result), ['exportScreen.taskButton.unique', 'exportScreen.taskButton.clickable']);
+});

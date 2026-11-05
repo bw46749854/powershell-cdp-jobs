@@ -22,12 +22,13 @@ function Get-CdpPageTargets {
     #>
     param(
         [Parameter(Mandatory)][object]$Transport,
-        [Parameter(Mandatory)][string]$DebuggerUrl
+        [Parameter(Mandatory)][string]$DebuggerUrl,
+        [Parameter(Mandatory)][int]$TimeoutSeconds
     )
 
     $getText = Get-PortMember -Port $Transport -PortName 'CdpTransport' -Member 'GetText'
     try {
-        $text = & $getText -Uri $DebuggerUrl -TimeoutSeconds 10
+        $text = & $getText -Uri $DebuggerUrl -TimeoutSeconds $TimeoutSeconds
     }
     catch {
         throw (New-BridgeException -Category 'browser-unreachable' -Message "ブラウザのデバッグ用ポートに接続できません（$DebuggerUrl）。Edge / Chrome を --remote-debugging-port 付きで起動してください。詳細: $($_.Exception.Message)" -InnerException $_.Exception)

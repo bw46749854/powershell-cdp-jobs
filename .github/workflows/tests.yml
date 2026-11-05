@@ -1,0 +1,39 @@
+# テスト一式（docs/guides/testing.md）。本番と同じ Windows PowerShell 5.1 でも実行する。
+name: tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows (PowerShell 5.1 / 7, E2E with Edge)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Windows PowerShell 5.1 - Pester and browser scripts
+        shell: powershell
+        run: ./tools/Invoke-Tests.ps1
+      - name: PowerShell 7 - Pester including E2E
+        shell: pwsh
+        run: ./tools/Invoke-Tests.ps1 -Suite Pester -IncludeE2E
+
+  linux:
+    name: Linux (PowerShell 7, E2E with Chrome)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: PowerShell 7 - all suites including E2E
+        shell: pwsh
+        run: ./tools/Invoke-Tests.ps1 -IncludeE2E
