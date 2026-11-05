@@ -1,4 +1,8 @@
 @echo off
-rem Windows PowerShell 5.1 でテスト一式を実行する（ダブルクリック用）。
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Invoke-Tests.ps1"
+rem Runs all test suites with Windows PowerShell 5.1 (for double-click use).
+rem Arguments are passed on, for example: run-tests.bat -Suite Pester -IncludeE2E
+setlocal
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Invoke-Tests.ps1" %*
+set "EXIT_CODE=%ERRORLEVEL%"
 pause
+exit /b %EXIT_CODE%

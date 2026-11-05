@@ -22,6 +22,8 @@ foreach ($relativePath in @(
     'Private/ScriptBundle.ps1',
     'Private/ContractResult.ps1',
     'Private/PageGateway.ps1',
+    'Public/Transport.ps1',
+    'Public/Catalog.ps1',
     'Public/PageConnection.ps1'
 )) {
     $path = Join-Path $PSScriptRoot $relativePath

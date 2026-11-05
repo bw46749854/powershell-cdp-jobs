@@ -12,7 +12,7 @@ function Read-JobSetting {
     TextList  : 空白でない文字列の配列（1件以上。単独の文字列は不可）
     Flag      : 真偽値
     .PARAMETER Scope
-    エラーメッセージ用の設定位置（例: Jobs.PlotRosterExport）。
+    エラーメッセージ用の設定位置（例: Jobs.<ジョブ名>）。
     .NOTES
     TextList の戻り値は配列のため、呼び出し側は @() で受けること。
     #>

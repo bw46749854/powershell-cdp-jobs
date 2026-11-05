@@ -5,53 +5,6 @@ $script:BridgeLogShape = @{
     Warn = @('Message')
 }
 
-function Test-PageTargetIdentity {
-    <#
-    .SYNOPSIS
-    1つのタブに一時的に接続し、スクリプトを注入して画面識別を実行する。
-    .DESCRIPTION
-    接続前の失敗は stage=connect、接続後の失敗は stage=identify として例外に印を付ける
-    （Select-IdentifiedPageTarget が続行可否を判断するため）。
-    #>
-    param(
-        [Parameter(Mandatory)][object]$Target,
-        [Parameter(Mandatory)][object]$Context
-    )
-
-    try {
-        $session = Open-CdpSession `
-            -Transport $Context.Transport `
-            -WebSocketUrl ([string]$Target.webSocketDebuggerUrl) `
-            -ConnectTimeoutSeconds $Context.ConnectTimeoutSeconds `
-            -CommandTimeoutSeconds $Context.CommandTimeoutSeconds `
-            -Clock $Context.Clock
-    }
-    catch {
-        $_.Exception.Data['pagebridge.probe.stage'] = 'connect'
-        throw
-    }
-
-    try {
-        $state = New-PageGatewayState -Session $session -Catalog $Context.Catalog -ScriptPaths $Context.ScriptPaths -JobName $Context.JobName -Log $Context.Log
-        [void](Invoke-PageBundleInjection -State $state)
-        $identity = Invoke-PageOperation -State $state -Operation $Context.Catalog.IdentityOperation
-
-        if ($identity.ok -eq $true) {
-            return [pscustomobject]@{ Matched = $true; Reason = '画面識別に一致しました。' }
-        }
-
-        $failed = @($identity.checks | Where-Object { $_.ok -ne $true -and $_.severity -eq 'fatal' } | ForEach-Object { "$($_.name)「$($_.message)」" })
-        return [pscustomobject]@{ Matched = $false; Reason = "画面識別に一致しません。満たしていない条件: $($failed -join ' / ')" }
-    }
-    catch {
-        $_.Exception.Data['pagebridge.probe.stage'] = 'identify'
-        throw
-    }
-    finally {
-        Close-CdpSession -Session $session
-    }
-}
-
 function Open-PageConnection {
     <#
     .SYNOPSIS
