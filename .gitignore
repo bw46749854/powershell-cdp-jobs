@@ -1,0 +1,19 @@
+# ジョブの実行成果物（設定の既定値は work/ 配下に出力する）
+/work/
+
+# ログ
+/logs/
+*.log
+
+# テスト成果物
+/tests/out/
+coverage.xml
+testResults.xml
+
+# Node.js
+node_modules/
+
+# OS / エディタ
+Thumbs.db
+.DS_Store
+.vscode/

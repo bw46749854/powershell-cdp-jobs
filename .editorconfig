@@ -1,0 +1,23 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Windows PowerShell 5.1 は BOM なしの UTF-8 を ANSI として読むため、PowerShell 系は BOM 付きに固定する。
+[*.{ps1,psm1,psd1}]
+charset = utf-8-bom
+
+# cmd.exe 向け。改行は CRLF（.gitattributes でも固定している）。
+[*.bat]
+end_of_line = crlf
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false

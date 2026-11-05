@@ -1,0 +1,11 @@
+* text=auto eol=lf
+
+# cmd.exe はラベルや goto の解釈で LF 改行に弱いため、バッチだけ CRLF に固定する。
+*.bat text eol=crlf
+
+# 同梱した外部モジュール（Pester）は署名付きのため、改行を含めて1バイトも変えない。
+tools/vendor/** -text
+
+*.dll binary
+*.pdb binary
+*.png binary

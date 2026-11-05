@@ -1,0 +1,14 @@
+{
+  "name": "greenhouse-ops-automation",
+  "private": true,
+  "description": "ブラウザ側スクリプト（app/browser）の単体テスト用。実行時には使用しない。",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test tests/js/"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0"
+  }
+}
