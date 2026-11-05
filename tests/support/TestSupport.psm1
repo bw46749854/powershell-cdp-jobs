@@ -282,6 +282,73 @@ function New-ContractResult {
     }
 }
 
+
+function New-ScriptedMember {
+    param(
+        [Parameter(Mandatory)][string]$PortName,
+        [Parameter(Mandatory)][string]$MemberName,
+        [string[]]$Parameters = @(),
+        [AllowNull()][object]$Handler,
+        [Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.ArrayList]$Calls
+    )
+
+    $parameterText = (@($Parameters | ForEach-Object { '$' + $_ }) -join ', ')
+    $body = @"
+[CmdletBinding()]
+param($parameterText)
+`$bound = @{}
+foreach (`$key in `$PSBoundParameters.Keys) { `$bound[`$key] = `$PSBoundParameters[`$key] }
+[void]`$Calls.Add([pscustomobject]@{ Port = `$PortName; Member = `$MemberName; Arguments = `$bound })
+if (`$Handler -is [scriptblock]) { & `$Handler `$bound } else { `$Handler }
+"@
+    return [scriptblock]::Create($body).GetNewClosure()
+}
+
+function New-ScriptedPort {
+    <#
+    .SYNOPSIS
+    形（メンバー名とパラメーター名）を宣言して、呼び出しを記録する偽のポートを作る。
+    .PARAMETER Members
+    メンバー名 → @{ Parameters = @('Path', ...); Result = <値> または { param($Bound) ... } }
+    Result を省略すると $null を返す。
+    .PARAMETER Calls
+    複数のポートで共有する呼び出し記録（ポートをまたいだ順序を検証するときに渡す）。
+    #>
+    param(
+        [Parameter(Mandatory)][string]$Name,
+        [Parameter(Mandatory)][hashtable]$Members,
+        [AllowNull()][AllowEmptyCollection()][System.Collections.ArrayList]$Calls = $null
+    )
+
+    if ($null -eq $Calls) { $Calls = New-Object System.Collections.ArrayList }
+    $port = [ordered]@{ Calls = $Calls }
+    foreach ($memberName in @($Members.Keys)) {
+        $definition = $Members[$memberName]
+        $parameters = @()
+        $handler = $null
+        if ($definition -is [hashtable]) {
+            if ($definition.ContainsKey('Parameters')) { $parameters = @($definition.Parameters) }
+            if ($definition.ContainsKey('Result')) { $handler = $definition.Result }
+        }
+        $port[$memberName] = New-ScriptedMember -PortName $Name -MemberName $memberName -Parameters $parameters -Handler $handler -Calls $Calls
+    }
+
+    return [pscustomobject]$port
+}
+
+function Get-PortCalls {
+    <#
+    .SYNOPSIS
+    記録された呼び出しを「Port.Member」の文字列配列で返す（順序の検証用）。
+    #>
+    param(
+        [Parameter(Mandatory)][AllowEmptyCollection()][System.Collections.ArrayList]$Calls,
+        [string]$Port = ''
+    )
+
+    return @($Calls | Where-Object { [string]::IsNullOrEmpty($Port) -or $_.Port -eq $Port } | ForEach-Object { "$($_.Port).$($_.Member)" })
+}
+
 Export-ModuleMember -Function @(
     'Get-RepositoryPath',
     'New-CallRecorder',
@@ -291,5 +358,7 @@ Export-ModuleMember -Function @(
     'New-CategorizedTestException',
     'New-SimulatedPage',
     'New-FakeCdpTransport',
-    'New-ContractResult'
+    'New-ContractResult',
+    'New-ScriptedPort',
+    'Get-PortCalls'
 )
