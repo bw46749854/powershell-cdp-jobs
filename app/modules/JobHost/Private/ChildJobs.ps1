@@ -5,6 +5,7 @@
 #
 # 子ジョブは「親と同じ設定ファイル・同じジョブ定義ファイル」で必ず起動する。
 # パスを受け取る口を持たないことで、親子で別の設定を読む状態を構造的に起こせないようにしている。
+# テスト用のサービス差し替え（ServiceOverrides）も同じ理由で子ジョブへ引き継ぐ（本番では空）。
 
 $script:HostJobsShape = @{
     Run = @('JobName', 'Overrides')
@@ -17,7 +18,8 @@ function New-HostJobsService {
         [Parameter(Mandatory)][string]$ProjectRoot,
         [Parameter(Mandatory)][string]$SettingsPath,
         [Parameter(Mandatory)][string]$CatalogPath,
-        [Parameter(Mandatory)][hashtable]$Settings
+        [Parameter(Mandatory)][hashtable]$Settings,
+        [hashtable]$ServiceOverrides = @{}
     )
 
     $invokeHostedJob = Get-Command -Name Invoke-HostedJob -CommandType Function
@@ -27,7 +29,7 @@ function New-HostJobsService {
         Run = {
             [CmdletBinding()]
             param([Parameter(Mandatory)][string]$JobName, [hashtable]$Overrides = @{})
-            & $invokeHostedJob -AppRoot $AppRoot -JobName $JobName -SettingsPath $SettingsPath -CatalogPath $CatalogPath -SettingsOverrides $Overrides
+            & $invokeHostedJob -AppRoot $AppRoot -JobName $JobName -SettingsPath $SettingsPath -CatalogPath $CatalogPath -SettingsOverrides $Overrides -ServiceOverrides $ServiceOverrides
         }.GetNewClosure()
         GetSettings = {
             [CmdletBinding()]

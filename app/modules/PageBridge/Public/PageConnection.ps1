@@ -40,8 +40,8 @@ function Test-PageTargetIdentity {
             return [pscustomobject]@{ Matched = $true; Reason = '画面識別に一致しました。' }
         }
 
-        $failed = @($identity.checks | Where-Object { $_.ok -ne $true -and $_.severity -eq 'fatal' } | ForEach-Object { $_.name })
-        return [pscustomobject]@{ Matched = $false; Reason = "画面識別に一致しません（fatal: $($failed -join ', ')）。" }
+        $failed = @($identity.checks | Where-Object { $_.ok -ne $true -and $_.severity -eq 'fatal' } | ForEach-Object { "$($_.name)「$($_.message)」" })
+        return [pscustomobject]@{ Matched = $false; Reason = "画面識別に一致しません。満たしていない条件: $($failed -join ' / ')" }
     }
     catch {
         $_.Exception.Data['pagebridge.probe.stage'] = 'identify'

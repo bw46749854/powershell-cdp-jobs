@@ -1,0 +1,45 @@
+/* モック画面の共通スタイル（見た目は契約ではない。クラス名・色・配置は自由に変えてよい） */
+:root {
+    --mock-bg: #f5f6f4;
+    --mock-surface: #ffffff;
+    --mock-text: #1f2a24;
+    --mock-muted: #5d6b62;
+    --mock-line: #d7ddd8;
+    --mock-accent: #2f7d4f;
+    --mock-accent-soft: #e3f1e8;
+    --mock-row: 36px;
+    font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif;
+    font-size: 14px;
+    color: var(--mock-text);
+    background: var(--mock-bg);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--mock-bg); }
+button { font: inherit; }
+[hidden] { display: none !important; }
+
+.mock-toast {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    max-width: 360px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: #24302a;
+    color: #fff;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+}
+.mock-toast.is-shown { opacity: 1; transform: none; }
+
+.mock-banner-note {
+    margin: 0;
+    padding: 4px 16px;
+    font-size: 12px;
+    color: var(--mock-muted);
+    background: #fff8dc;
+    border-bottom: 1px solid #eadfb4;
+}

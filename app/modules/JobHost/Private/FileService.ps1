@@ -56,8 +56,12 @@ function Get-HostFileList {
         throw "ディレクトリが見つかりません: $Directory"
     }
 
+    # -Filter は Windows では 8.3 短縮名にも一致する（'*.csv' が 'a.csvx' に一致する）ため、
+    # 名前全体へのワイルドカード一致で絞り直す。
+    $pattern = New-Object System.Management.Automation.WildcardPattern -ArgumentList $Filter, ([System.Management.Automation.WildcardOptions]::IgnoreCase)
     return @(
         Get-ChildItem -LiteralPath $Directory -File -Filter $Filter |
+            Where-Object { $pattern.IsMatch($_.Name) } |
             Sort-Object Name |
             ForEach-Object {
                 [pscustomobject]@{

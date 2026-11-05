@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>モック画面の一覧</title>
+<link rel="stylesheet" href="shared/base.css">
+<style>
+  main { max-width: 720px; margin: 32px auto; padding: 0 16px; }
+  li { margin: 12px 0; }
+  a { color: var(--mock-accent); font-weight: 600; }
+  p.note { color: var(--mock-muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>モック画面</h1>
+  <p class="note">ジョブの動作確認用の架空の画面です。データは開いた日を基準に作られ、操作はどこにも送信されません。</p>
+  <ul>
+    <li><a href="greenhouse-console/">温室コンソール — 区画一覧</a><br>PlotRosterExport / SoilAnalysisTargetSync（週次の連携）の対象</li>
+    <li><a href="planting-ledger/">作付け台帳 — 区画一覧</a><br>PlantingRecordExport（月次の連携）の対象</li>
+  </ul>
+</main>
+</body>
+</html>

@@ -57,7 +57,7 @@ function New-HostRunContext {
         Files = New-HostFileService
         Downloads = New-HostDownloadService -Clock $clock
         Lists = New-HostListService -Clock $clock -Log $log
-        Jobs = New-HostJobsService -AppRoot $AppRoot -ProjectRoot $ProjectRoot -SettingsPath $SettingsPath -CatalogPath $CatalogPath -Settings $Settings
+        Jobs = New-HostJobsService -AppRoot $AppRoot -ProjectRoot $ProjectRoot -SettingsPath $SettingsPath -CatalogPath $CatalogPath -Settings $Settings -ServiceOverrides $Overrides
         Browser = $browser
     }
 

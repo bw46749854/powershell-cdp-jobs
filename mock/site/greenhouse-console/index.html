@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>区画一覧 - 全区画（既定） | 温室コンソール</title>
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--
+  モック画面「温室コンソール」の区画一覧。
+  ジョブ PlotRosterExport / SoilAnalysisTargetSync が前提にする画面の「意味」（app/browser/screens/greenhouse-plot-list.js と
+  app/browser/features/plot-roster-export.js / soil-analysis-sync*.js の冒頭コメント）を満たすように作っている。
+  タグ・クラス・入れ子は契約ではないので、構造の違いへの強さを試すときは自由に変えてよい。
+-->
+<div class="gc-app" data-app="greenhouse-console">
+  <header class="gc-header" role="banner">
+    <span class="gc-brand">温室コンソール</span>
+    <span class="gc-header__user">モック環境</span>
+  </header>
+  <p class="mock-banner-note">これは自動化の動作確認用のモック画面です。データは架空で、操作はどこにも送信されません。</p>
+  <div class="gc-body">
+    <nav class="gc-nav" aria-label="メインメニュー">
+      <a href="#dashboard" class="gc-nav__item" data-nav="dashboard">ダッシュボード</a>
+      <a href="#plots" class="gc-nav__item is-current" data-nav="plots" aria-current="page">区画</a>
+      <a href="#records" class="gc-nav__item" data-nav="records">記録</a>
+    </nav>
+    <aside class="gc-groups">
+      <h2 class="gc-groups__title">区画グループ</h2>
+      <ul role="tree" aria-label="区画グループ" id="group-tree"></ul>
+    </aside>
+    <main class="gc-main">
+      <h1 id="page-title">全区画（既定）</h1>
+      <div class="gc-toolbar" role="toolbar" aria-label="区画の操作">
+        <div class="gc-menu">
+          <button type="button" class="gc-button" aria-haspopup="menu" aria-expanded="false" aria-controls="menu-actions">操作</button>
+          <div id="menu-actions" class="gc-menu__list" role="menu" hidden>
+            <div class="gc-menu__wrap"><div role="menuitem" tabindex="-1" data-command="export">CSV出力</div></div>
+            <div class="gc-menu__wrap"><div role="menuitem" tabindex="-1" data-command="move" aria-disabled="true">グループへ移動</div></div>
+          </div>
+        </div>
+        <div class="gc-menu">
+          <button type="button" class="gc-button" aria-haspopup="menu" aria-expanded="false" aria-controls="menu-analysis">分析</button>
+          <div id="menu-analysis" class="gc-menu__list" role="menu" hidden>
+            <div role="group" aria-label="選択区画">
+              <div role="menuitem" tabindex="-1" data-command="request-analysis" aria-disabled="true">土壌分析を依頼</div>
+              <div role="menuitem" tabindex="-1" data-command="cancel-analysis" aria-disabled="true">依頼を取り消す</div>
+            </div>
+          </div>
+        </div>
+        <input type="search" id="plot-search" class="gc-search" aria-label="区画コードで絞り込み" placeholder="区画コードで絞り込み">
+        <span class="gc-count" data-count="plots" id="plot-count">区画: 0</span>
+      </div>
+      <div class="gc-table" role="grid" aria-label="区画一覧">
+        <div class="gc-table__scroll" id="table-scroll">
+          <div class="gc-table__panes">
+            <div class="gc-pane gc-pane--pinned" role="rowgroup" data-pinned="start" id="pane-pinned"></div>
+            <div class="gc-pane" role="rowgroup" id="pane-main"></div>
+          </div>
+        </div>
+      </div>
+      <p class="gc-hint">選択中: <span id="selected-count">0</span> 区画</p>
+    </main>
+  </div>
+</div>
+<script src="../shared/mock-data.js"></script>
+<script src="../shared/mock-kit.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

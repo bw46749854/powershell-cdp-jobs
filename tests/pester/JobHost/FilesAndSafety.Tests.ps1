@@ -87,10 +87,12 @@ Describe 'Files service' {
         Set-Content -LiteralPath (Join-Path $directory 'b.csv') -Value 'bb' -NoNewline
         Set-Content -LiteralPath (Join-Path $directory 'a.csv') -Value 'a' -NoNewline
         Set-Content -LiteralPath (Join-Path $directory 'c.txt') -Value 'c' -NoNewline
+        Set-Content -LiteralPath (Join-Path $directory 'd.csvx') -Value 'd' -NoNewline
 
         $listed = @(& $files.ListFiles -Directory $directory -Filter '*.csv')
         @($listed | ForEach-Object { $_.Name }) | Should -Be @('a.csv', 'b.csv')
         $listed[1].Length | Should -Be 2
+        @(& $files.ListFiles -Directory $directory -Filter 'b*') | ForEach-Object { $_.Name } | Should -Be 'b.csv'
     }
 
     It 'reads UTF-8 text with or without a BOM, and bytes as a single array' {

@@ -126,6 +126,7 @@ Describe 'Invoke-HostedJob' {
         $result.Outputs.Child.Outputs.SettingsPath | Should -Be ([System.IO.Path]::GetFullPath($customSettings))
         $result.Outputs.Child.Outputs.Directory | Should -Be ([System.IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $appRoot) 'runs/child')))
         $result.Outputs.ChildDefaultWord | Should -Be 'custom'
+        @($silent.Lines | Where-Object { $_ -like '*echo: from-chain*' }).Count | Should -Be 1
     }
 }
 
