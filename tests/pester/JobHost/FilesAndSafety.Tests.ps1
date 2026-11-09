@@ -160,7 +160,7 @@ Describe 'Files service' {
         Split-Path -Leaf $first | Should -Be 'plot.csv'
         Split-Path -Leaf $second | Should -Be 'plot (1).csv'
         Split-Path -Leaf $third | Should -Be 'plot (2).csv'
-        (Get-Content -LiteralPath $third) | Should -Be 'three'
+        (Get-Content -LiteralPath $third -Encoding UTF8) | Should -Be 'three'
     }
 
     It 'rejects file names that could escape the destination' {

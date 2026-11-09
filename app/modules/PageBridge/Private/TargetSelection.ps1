@@ -8,7 +8,8 @@ function ConvertFrom-CdpTargetListText {
     param([Parameter(Mandatory)][AllowEmptyString()][string]$Text)
 
     try {
-        return @(ConvertFrom-Json -InputObject $Text)
+        # 5.1 の ConvertFrom-Json は JSON の配列を「配列1つ」として出力するため、ForEach-Object で要素に展開する
+        return @(ConvertFrom-Json -InputObject $Text | ForEach-Object { $_ })
     }
     catch {
         throw (New-BridgeException -Category 'browser-unreachable' -Message "ブラウザのタブ一覧を JSON として解釈できません: $($_.Exception.Message)")

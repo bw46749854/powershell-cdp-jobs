@@ -176,7 +176,7 @@ function New-FakeCdpTransport {
         $method = $methodMatch.Groups['method'].Value
         $arguments = @()
         if ($argsMatch.Success -and -not [string]::IsNullOrWhiteSpace($argsMatch.Groups['args'].Value)) {
-            $arguments = @(ConvertFrom-Json -InputObject ('[' + $argsMatch.Groups['args'].Value + ']'))
+            $arguments = @(ConvertFrom-Json -InputObject ('[' + $argsMatch.Groups['args'].Value + ']') | ForEach-Object { $_ })
         }
 
         [void]$Page.Calls.Add([pscustomobject]@{ Method = $method; Arguments = $arguments })

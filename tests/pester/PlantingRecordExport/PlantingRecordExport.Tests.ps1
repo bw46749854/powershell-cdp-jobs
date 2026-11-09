@@ -115,7 +115,7 @@ Describe 'Planting record names' {
         InModuleScope PlantingRecordExport {
             Get-PlantingRecordFileName -DownloadedName 'planting_20260415.csv' -PlotCode 'GH2-B01' | Should -Be 'planting_20260415_GH2-B01.csv'
             Get-PlantingRecordFileName -DownloadedName 'planting_20260415 (3).csv' -PlotCode 'GH2-B01' | Should -Be 'planting_20260415_GH2-B01.csv'
-            Get-PlantingRecordFileName -DownloadedName 'planting_20260415.csv' -PlotCode "GH2 B01/x`u{3000}" | Should -Be 'planting_20260415_GH2_B01_x.csv'
+            Get-PlantingRecordFileName -DownloadedName 'planting_20260415.csv' -PlotCode ('GH2 B01/x' + [char]0x3000) | Should -Be 'planting_20260415_GH2_B01_x.csv'
         }
     }
 

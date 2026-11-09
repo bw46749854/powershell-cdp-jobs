@@ -30,10 +30,10 @@ Describe 'Source encoding and line endings' {
     }
 
     It 'declares the same encoding rules to editors and to git' {
-        $editorConfig = Get-Content -LiteralPath (Join-Path $script:Root '.editorconfig') -Raw
+        $editorConfig = Get-Content -LiteralPath (Join-Path $script:Root '.editorconfig') -Raw -Encoding UTF8
         $editorConfig | Should -Match '(?s)\[\*\.\{ps1,psm1,psd1\}\][^\[]*charset\s*=\s*utf-8-bom'
         $editorConfig | Should -Match '(?s)\[\*\.bat\][^\[]*end_of_line\s*=\s*crlf'
-        $gitAttributes = Get-Content -LiteralPath (Join-Path $script:Root '.gitattributes') -Raw
+        $gitAttributes = Get-Content -LiteralPath (Join-Path $script:Root '.gitattributes') -Raw -Encoding UTF8
         $gitAttributes | Should -Match '\*\.bat\s+text\s+eol=crlf'
     }
 }

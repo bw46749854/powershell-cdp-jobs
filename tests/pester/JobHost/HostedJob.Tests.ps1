@@ -117,7 +117,7 @@ Describe 'Invoke-HostedJob' {
         $appRoot = New-FixtureApp -Name 'chain'
         $customSettings = Join-Path (Split-Path -Parent $appRoot) 'custom-settings.psd1'
         Copy-Item -LiteralPath (Join-Path $appRoot 'config/settings.psd1') -Destination $customSettings
-        (Get-Content -LiteralPath $customSettings -Raw).Replace("Word = 'default'", "Word = 'custom'") | Set-Content -LiteralPath $customSettings -Encoding UTF8
+        (Get-Content -LiteralPath $customSettings -Raw -Encoding UTF8).Replace("Word = 'default'", "Word = 'custom'") | Set-Content -LiteralPath $customSettings -Encoding UTF8
         $silent = New-SilentServices
 
         $result = Invoke-HostedJob -AppRoot $appRoot -JobName 'Chain' -SettingsPath $customSettings -ServiceOverrides $silent.Overrides

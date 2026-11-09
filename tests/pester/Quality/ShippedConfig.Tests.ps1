@@ -92,7 +92,7 @@ Describe 'app/config/settings.psd1' {
                 $script:Settings.Jobs[$job][$key] | Should -BeLike ((Get-RepositoryPath 'work') + '*') -Because "Jobs.$job.$key"
             }
         }
-        Get-Content -LiteralPath (Get-RepositoryPath '.gitignore') | Should -Contain '/work/'
+        Get-Content -LiteralPath (Get-RepositoryPath '.gitignore') -Encoding UTF8 | Should -Contain '/work/'
     }
 }
 

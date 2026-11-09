@@ -107,7 +107,7 @@ Describe 'Module boundaries' {
         $catalog = Import-PowerShellDataFile -LiteralPath (Get-RepositoryPath 'app/config/jobs.psd1')
         $names = @($catalog.Jobs.Keys) + @(Get-ChildItem -LiteralPath $script:ModulesRoot -Recurse -Filter 'PageOperations.psd1' | ForEach-Object { (Import-PowerShellDataFile -LiteralPath $_.FullName).Helper })
         foreach ($module in @('PageBridge', 'JobHost', 'JobKit')) {
-            foreach ($file in @(Get-ChildItem -LiteralPath (Join-Path $script:ModulesRoot $module) -Recurse -File -Include '*.ps1', '*.psm1')) {
+            foreach ($file in @(Get-ChildItem -LiteralPath (Join-Path $script:ModulesRoot $module) -Recurse -File | Where-Object { @('.ps1', '.psm1') -contains $_.Extension.ToLowerInvariant() })) {
                 $text = [System.IO.File]::ReadAllText($file.FullName)
                 foreach ($name in $names) {
                     $text.Contains($name) | Should -BeFalse -Because "$module/$($file.Name) にジョブ固有の名前 $name がある"

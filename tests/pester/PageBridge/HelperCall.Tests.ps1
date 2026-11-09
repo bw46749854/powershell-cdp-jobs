@@ -17,7 +17,7 @@ BeforeAll {
         $json = ConvertTo-Json -InputObject @($Cases) -Depth 10
         $output = $json | & node $script
         $results = @{}
-        foreach ($result in @(ConvertFrom-Json -InputObject ($output -join ''))) { $results[$result.name] = $result }
+        foreach ($result in @(ConvertFrom-Json -InputObject ($output -join '') | ForEach-Object { $_ })) { $results[$result.name] = $result }
         return $results
     }
 
