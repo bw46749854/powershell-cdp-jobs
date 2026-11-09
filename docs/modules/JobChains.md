@@ -17,6 +17,19 @@
 - **失敗した時点で止まる。** 子ジョブの失敗は例外のまま呼び出し元へ伝わり、後段の子ジョブは動きません。子ジョブの結果は、`Jobs` サービスの実装に頼らず、ここでも結果の約束（`Assert-JobResult`）どおりか確かめます。
 - **上書きはログに残す。** 子ジョブへ渡す上書き値は、`引き渡し: <子ジョブ>.<キー> = <値>` の形でログに出します。
 
+## コードの読み方
+
+```text
+Invoke-<連携>Job（Public）
+  New-JobChainPorts / Assert-JobChainPorts      Log / Clock / Files / Jobs だけを使う
+  Invoke-<連携>Flow（Weekly.ps1 / Monthly.ps1）
+    Invoke-ChainStep -JobName <子ジョブ> [-Overrides @{ … }]   子ジョブを実行し、結果の約束を確かめる
+    Get-ChainOutputText -Result … -Name …                       前段の Outputs から値を1つ受け取る（無ければ止める）
+  New-JobResult                                  子ジョブの Outputs / Summary をまとめて返す
+```
+
+新しい連携ジョブを足すときは、`Private/<名前>.ps1` に Flow を書き、`Public/` にジョブコマンドを置いて jobs.psd1 に登録します。連携ジョブの中で CSV を読む・画面を操作する・判定をする必要が出たら、それは子ジョブの責務です（連携ジョブに書かない）。
+
 ## ファイル構成
 
 | ファイル | 役割 |

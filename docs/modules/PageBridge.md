@@ -4,6 +4,24 @@
 
 依存: `JobKit`
 
+## CDP の基礎
+
+PageBridge のコードを読むために必要な範囲だけを書きます。
+
+1. **デバッグ用ポートを開いたブラウザ**: Edge / Chrome を `--remote-debugging-port=9222` 付きで起動すると、`http://localhost:9222/json` でタブ（ターゲット）の一覧を JSON で返します。1つのタブには `type`（`page` など）、`title`、`url`、`webSocketDebuggerUrl` があります。
+2. **タブとの接続**: `webSocketDebuggerUrl` に WebSocket で接続すると、そのタブに命令を送れます。
+3. **命令と応答**: 命令は `{ "id": 7, "method": "Runtime.evaluate", "params": { … } }` の JSON です。ブラウザは同じ `id` を付けて `{ "id": 7, "result": { … } }` か `{ "id": 7, "error": { … } }` を返します。`id` の無いメッセージ（イベントの通知）も届くため、`Send-CdpCommand` は自分の `id` の応答が来るまで、それ以外を読み捨てます。
+4. **このプロジェクトが使う命令は3つだけです。**
+
+   | 命令 | 用途 | 主なパラメーター |
+   |---|---|---|
+   | `Runtime.evaluate` | ページの中で JavaScript の式を評価する（注入・ヘルパーの呼び出し） | `returnByValue`（結果を JSON の値で返す。DOM 要素は返せない）、`awaitPromise`（Promise の解決まで待つ）、`userGesture`（利用者の操作として扱う） |
+   | `Browser.setDownloadBehavior` | ダウンロードを確認なしで許可し、保存先を決める | `behavior = 'allow'`、`downloadPath` |
+   | `Page.setDownloadBehavior` | 上が使えない環境での代わり | 同上 |
+
+5. **期限と切断**: 命令1つ（送信から応答まで）に期限を1つ持ちます。期限切れ・切断・応答が JSON でないときは、そのセッションを強制的に閉じます（`Stop-CdpSessionAfterFailure`）。遅れて届いた応答で `id` の対応が崩れたセッションを、続けて使わないためです。以後の呼び出しは `session-lost` で即座に失敗します。
+6. **プロキシを使わない**: 通信は localhost だけです。社内プロキシの設定に引きずられないよう、HTTP / WebSocket ともにプロキシを無効にしています（[CdpTransport.ps1](../../app/modules/PageBridge/Private/CdpTransport.ps1)）。
+
 ## 公開関数
 
 | 関数 | ファイル | 内容 |
@@ -96,6 +114,44 @@ Kind に許されない呼び出し方（例: Contract を Invoke で読み捨�
 | `Receive` | `Handle`, `TimeoutMilliseconds` |
 | `Close` | `Handle`, `TimeoutMilliseconds` |
 | `Abort` | `Handle` |
+
+## コードの読み方
+
+ファイルは下の層から上の層へ、次の順に依存しています。上の層は下の層の形にだけ依存し、`System.Net` を直接使うのは `CdpTransport.ps1` だけです。
+
+```text
+PageConnection.ps1（公開）   接続・切断・ダウンロード先
+  TargetSelection.ps1          タブ一覧 → 操作し得るタブ → 画面識別でちょうど1つ
+  PageGateway.ps1              Inject / Invoke / WaitUntil / WaitFor / Assert
+    OperationCatalog.ps1         操作の定義と、Kind ごとに許される呼び方
+    HelperCall.ps1               ヘルパー呼び出しの JavaScript の式
+    ScriptBundle.ps1             スクリプトの連結と ack の検証
+    ContractResult.ps1           契約結果の形・scope・合否
+    CdpRuntime.ps1               Runtime.evaluate、評価の待機、ダウンロード先
+      CdpSession.ps1               命令の送受信、期限、失敗時の強制切断
+        CdpTransport.ps1             HTTP / WebSocket（トランスポートポートの実装）
+BridgeErrors.ps1               分類付きの例外（どの層からも使う）
+```
+
+主なデータの形:
+
+| 名前 | 形 | 作る場所 |
+|---|---|---|
+| セッション | `Transport` / `Handle` / `WebSocketUrl` / `CommandTimeoutSeconds` / `Clock` / `NextId` / `Closed` | `Open-CdpSession` |
+| 操作カタログ | `Path` / `Helper` / `Operations`（操作名 → 操作の定義） / `IdentityOperation` | `Import-PageOperationCatalog` |
+| ゲートウェイの状態 | `Session` / `Catalog` / `ScriptPaths` / `JobName` / `Log` | `New-PageGatewayState` |
+| 接続 | `Session` / `Target`（`Title`, `Url`） / `Gateway` / `Log` | `Open-PageConnection` |
+| 操作の定義 | `Name` / `Method` / `Kind` / `Scope` / `TimeoutSeconds` / `Label` | `Import-PageOperationCatalog` |
+| 契約結果 | `{ scope, ok, fatalCount, warningCount, checks, details }` | ページスクリプト（pagekit の `contract.result`） |
+
+変更の典型と影響:
+
+| 変えたいこと | 直す場所 | 影響 |
+|---|---|---|
+| 待機の既定の上限・間隔 | `PageGateway.ps1` の `$script:PageWaitDefaults`、`Wait-CdpEvaluation` の `PollMilliseconds` | すべてのジョブの待機 |
+| Kind の追加・扱いの変更 | `OperationCatalog.ps1`、`HelperCall.ps1`（ヘルパーが無いときの扱い） | すべての操作カタログ。設計判断の記録（[decisions/0004](../decisions/0004-operation-catalog-kinds.md)）も直す |
+| 「通信を続けられない」分類の変更 | `BridgeErrors.ps1` の `$script:BridgeFatalCategories` | ジョブの区画ごとの処理が止まるか続くかが変わる |
+| タブを候補から除く条件 | `TargetSelection.ps1` の `Test-OperablePageTarget` | 画面識別を試すタブが変わる |
 
 ## ファイル構成
 

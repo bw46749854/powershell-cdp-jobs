@@ -100,6 +100,24 @@ return contract.result('plotRosterExport.exportScreen', checks, { plotCount });
 - 操作カタログの `Kind` に応じて、ヘルパーが無いときの扱いが変わる（[PageBridge.md](../modules/PageBridge.md#操作カタログ)）。メソッドの中で `[pagekit:helper-missing]` の目印付きの例外を投げると、PowerShell は「続行不能」として扱う。
 - `Identity` の操作は副作用を持たない（すべてのタブで実行されるため）。
 
+## 5. 部品を読む順番
+
+1. **冒頭コメント**: 部品名・ヘルパー名・契約（意味）・吸収する構造の違い。ここで「何を厳格に確かめ、何を吸収するか」が分かります。
+2. **先頭の定数**: 画面の文言（ボタン名・見出し・製品名）。画面が変わったときに直すのはまずここです。
+3. **`resolve…` / `read…` のメソッド**: 要素を探して `locate.unique` の結果を返す部分。探し方（role・名前・`data-*`）がここにあります。
+4. **`check…` のメソッド（Contract）**: `contract.check` を並べて `contract.result` を返します。条件名（`exportScreen.taskButton.unique` など）はログ・テストと共通の名前です。
+5. **操作のメソッド（Action）**: 直前に契約を確かめ直してから操作し、結果を返します。
+
+メソッドが返す値の形:
+
+| 種類 | 形 |
+|---|---|
+| 要素を探した結果 | `{ ok, element, count, reason: unique / none / ambiguous, candidates }`（`element` はページの中だけで使い、PowerShell へは返さない） |
+| 契約結果（Contract / Identity） | `{ scope, ok, fatalCount, warningCount, checks: [{ name, ok, severity, message, details }], details }` |
+| 操作の結果（Action） | `{ ok: true, action: '<したこと>', … }`、失敗は `{ ok: false, reason: '<機械的に読める語>', … }` |
+| 読み取り（Query） | 行の配列など、JSON にできる値 |
+| 待機の条件（Probe） | `true` / `false` |
+
 ## この文書を更新するとき
 
 - kernel の API、部品の組み立て方、部品の書き方の約束が変わったとき

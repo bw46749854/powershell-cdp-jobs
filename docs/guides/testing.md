@@ -36,7 +36,7 @@ Windows PowerShell 5.1 では `tools\run-tests.bat`（引数はそのまま渡�
 | テスト | 確かめること |
 |---|---|
 | [Architecture.Tests.ps1](../../tests/pester/Quality/Architecture.Tests.ps1) | モジュールの依存の向き、モジュールのファイルがすべて読み込まれること、公開関数は Public にだけあること、ジョブのモジュールがポート以外で I/O・時刻・画面出力に触れないこと、Context に触れるのは合成ルートとジョブコマンドだけであること、PowerShell 側に DOM の探し方を書かないこと、操作カタログのメソッドがページスクリプトにあること、ページスクリプトが契約を冒頭に書いていること・外部へデータを送らないこと |
-| [PowerShellCompatibility.Tests.ps1](../../tests/pester/Quality/PowerShellCompatibility.Tests.ps1) | すべての PowerShell ファイルが構文エラーなく読め、5.1 に無い構文・コマンド・パラメーター・.NET API を使っていないこと |
+| [PowerShellCompatibility.Tests.ps1](../../tests/pester/Quality/PowerShellCompatibility.Tests.ps1) | すべての PowerShell ファイルが構文エラーなく読め、5.1 に無い構文・コマンド・パラメーター・.NET API を使っていないこと。5.1 でだけ結果が変わる書き方（`@(… ConvertFrom-Json)`、`-Encoding` の無い `Get-Content`、`-LiteralPath` と `-Include`、`` `u{…} ``）を使っていないこと |
 | [ShippedConfig.Tests.ps1](../../tests/pester/Quality/ShippedConfig.Tests.ps1) | 同梱の jobs.psd1 / settings.psd1 が各ジョブの検証を通り、読まれない設定が無いこと、ブラウザスクリプトのテストと注入順が一致すること、起動ファイルが定義済みのジョブだけを呼ぶこと |
 | [SourceHygiene.Tests.ps1](../../tests/pester/Quality/SourceHygiene.Tests.ps1) | 文字コード・改行の規約（`tools/Repair-SourceEncoding.ps1 -Check`）、バッチファイルが ASCII と CRLF であること |
 | [Documentation.Tests.ps1](../../tests/pester/Quality/Documentation.Tests.ps1) | 文書のリンク切れ、ジョブ・モジュール・ファイル・設定項目・ページスクリプトの掲載漏れ、公開関数のヘルプ |
@@ -80,7 +80,12 @@ jsdom はレイアウトを計算しないため、`hidden` 属性・`display:no
 | 実行基盤のサービス | `tests/pester/JobHost` |
 | ブラウザとの通信 | `tests/pester/PageBridge`（偽の CDP） |
 | 設定項目 | ShippedConfig が検出する。[configuration.md](configuration.md) にも追記する |
+| 出力 CSV の列・保存名 | そのジョブの単体テスト（見出し行・名前の規則）。連携に関わる名前なら JobChains のテストと E2E |
+| 依存の向き・Context の使い方・ポートの形 | Architecture が検出する。規則そのものを変えるときは [design-principles.md](design-principles.md) と設計判断の記録を先に直す |
+| 文書 | Documentation が検出する（リンク・掲載漏れ・設定項目・「この文書を更新するとき」） |
 | 画面の流れ・連携 | E2E（`-IncludeE2E`）。モック画面も合わせて直す |
+
+変更内容ごとの直す場所（コード側）は [making-changes.md](making-changes.md) にあります。
 
 ## 5. テストを書くときの約束
 
@@ -102,6 +107,45 @@ jsdom はレイアウトを計算しないため、`hidden` 属性・`display:no
 
 本番と同じ Windows PowerShell 5.1 での実行結果は、ここで確かめられます。
 
+## 7. テストが落ちたとき
+
+テストは仕様です。落ちたら「実装が仕様から外れた」のか「仕様が変わったのにテストが古い」のかを、まず決めます。
+
+1. **どのテストか**: 出力の `[-]` の行が、落ちたテストの場所（`Describe` 名 . `It` 名）です。その下の `Expected … but …` が期待と実際、`at …:<行>` がテストの行です。
+2. **1つだけ動かす**: `-Path` でファイルを絞り、`-Verbosity Detailed` で詳しく出します。
+
+   ```bash
+   pwsh -File tools/Invoke-Tests.ps1 -Suite Pester -Path tests/pester/SoilAnalysisTargetSync/Policy.Tests.ps1 -Verbosity Detailed
+   ```
+
+3. **テスト名を読む**: テスト名は「何をすると、どうなるか」です。その文が今も正しい仕様なら、直すのは実装です。
+4. **PowerShell 7 では通り 5.1 でだけ落ちる**: [powershell-compatibility.md](powershell-compatibility.md) の書き方を確かめます（テストのコードも対象です）。
+
+品質ゲートが落ちたときは、次の表で直す場所を引きます。
+
+| 落ちたテスト | メッセージの例 | 直すもの |
+|---|---|---|
+| Architecture | `X → Y は ARCHITECTURE.md の依存の向きにない` | 読み込みをやめる。必要な機能はポート（サービス）として受け取る |
+| Architecture | `… は Get-Date を直接使わず、ポートを使う` | `$Ports.Clock` / `$Ports.Files` / `$Ports.Log` を使う |
+| Architecture | Context に触れている | Context を読む処理を `Ports.ps1` かジョブコマンドへ移す |
+| Architecture | 操作カタログのメソッドがページスクリプトに無い | ページスクリプトにメソッドを足すか、カタログの `Method` の綴りを直す |
+| Architecture | ページスクリプトの冒頭コメントが無い | 「部品名」「契約（意味）」「吸収する構造の違い」を書く（[pagekit.md](../browser/pagekit.md#3-部品の書き方の約束)） |
+| PowerShellCompatibility | 5.1 に無い構文・パラメーター・API、5.1 でだけ結果が変わる書き方 | [powershell-compatibility.md](powershell-compatibility.md) の代わりの書き方にする |
+| ShippedConfig | 設定の検証に失敗する / 読まれない設定項目がある | 設定の値を直す。使わない項目を消すか、`Settings.ps1` で読む |
+| ShippedConfig | 注入順が一致しない | [tests/js/support/page.js](../../tests/js/support/page.js) の `SCRIPTS` を jobs.psd1 の `Browser.Scripts` と同じ順にする |
+| SourceHygiene | 文字コード・改行の違反 | `tools/Repair-SourceEncoding.ps1` を実行する |
+| Documentation | リンク切れ・掲載漏れ・設定項目の説明が無い・「この文書を更新するとき」が無い | 文書を直す（テストの対象から外さない） |
+
+## 8. テストを直してよいとき
+
+| 直してよい | 直してはいけない |
+|---|---|
+| 仕様が変わったと確認できた（業務担当の判断、設計判断の記録）。変更の理由をコミットに書く | 実装の出力に合わせて期待値を書き換える |
+| テスト自体の誤り（5.1 で動かない書き方、環境に依存する前提）を直す。期待する仕様は変えない | 期待値を緩める（`-Be` を `-Not -BeNullOrEmpty` にする、など） |
+| 境界の規則を意図して変える（[design-principles.md](design-principles.md) と設計判断の記録を先に直す） | テストを `-Skip` にする、検出の対象から外す、ファイルを消す |
+| テストを足す・強める | 落ちるテストを残したまま、別の変更を重ねる |
+
 ## この文書を更新するとき
 
 - テストの層・実行方法・補助関数・品質ゲート・CI が変わったとき
+- 品質ゲートのメッセージや、テストを直してよい条件が変わったとき

@@ -31,6 +31,7 @@ pwsh -File tools/Repair-SourceEncoding.ps1 -Check   # 確かめるだけ（違�
 | `-Encoding utf8NoBOM` / `utf8BOM` | `[System.IO.File]::WriteAllText($path, $text, (New-Object System.Text.UTF8Encoding -ArgumentList $true))` |
 | `$IsWindows` / `$IsLinux` | `[System.IO.Path]::DirectorySeparatorChar -eq '\'` など（StrictMode では未定義の変数を読むとエラーになる） |
 | `[System.IO.Path]::GetRelativePath()` などの .NET Core の API | 自前の関数（JobHost の `SafePaths.ps1` など） |
+| 文字列中の `` `u{3000} `` などの Unicode エスケープ（6 以降） | `[char]0x3000` を連結する（5.1 では `` `u `` はただの `u` になり、エラーにならずに別の文字列になる） |
 
 ## 3. 気をつける振る舞い
 
@@ -41,6 +42,13 @@ pwsh -File tools/Repair-SourceEncoding.ps1 -Check   # 確かめるだけ（違�
 - **`Set-StrictMode -Version 1.0`**: すべてのモジュールで有効です。未定義の変数を読むとエラーになります。
 - **HttpClient / WebSocket とプロキシ**: 社内プロキシの設定があると、localhost のデバッグ用ポートへの通信までプロキシへ送られることがあります。PageBridge はプロキシを明示的に無効にしています。
 - **`Mandatory` と空の値**: `[Parameter(Mandatory)]` の文字列・配列は空を受け付けません。空を許すときは `[AllowEmptyString()]` / `[AllowEmptyCollection()]` を付けます。
+
+次の書き方は**構文としては正しく、PowerShell 7 ではエラーにも結果の違いにもならない**ため気づけません。5.1 で実行して初めて結果が変わります。最初の3つと、2章の `` `u{…} `` は PowerShellCompatibility のテスト（「avoids constructs whose result silently differs on Windows PowerShell 5.1」）で書き方を検査しています。それでも、書いたら Windows PowerShell 5.1 でテストを実行してください。
+
+- **`ConvertFrom-Json` と JSON の配列**: 5.1 では、JSON の配列を「配列1つ」として出力します。`@(ConvertFrom-Json -InputObject $text)` は、要素がいくつあっても**要素1つ（中身は配列）**になります。要素ごとに扱うときは `@(ConvertFrom-Json -InputObject $text | ForEach-Object { $_ })` と書きます（7 でも同じ結果になります）。
+- **`Get-Content` / `Set-Content` の既定の文字コード**: 5.1 で `-Encoding` を省くと ANSI（日本語環境では CP932）として読み書きします。BOM の無い UTF-8 のファイル（`.gitignore`、md、js など）を読むと日本語が化け、行の区切りまで崩れることがあります。`-Encoding UTF8` を付けるか、`[System.IO.File]::ReadAllText($path)`（既定が UTF-8）を使います。テストが検査するのは `Get-Content` の `-Encoding` の有無です。`Set-Content` で日本語を書くときも `-Encoding UTF8` を付けます。
+- **`Get-ChildItem -LiteralPath … -Include …`**: 5.1 では、`-LiteralPath` と一緒に指定した `-Include` が効かず、すべてのファイルが返ることがあります。拡張子で絞るときは `Where-Object { $_.Extension -in @('.ps1', '.psm1', '.psd1') }` を使います。
+- **英語の Windows では気づけない違い**: 文字コードの問題は、ANSI が1バイト文字の環境（英語版 Windows、CI の既定）では表に出ないことがあります。本番と同じ日本語環境の 5.1 で確かめます。
 
 ## この文書を更新するとき
 

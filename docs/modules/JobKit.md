@@ -52,6 +52,19 @@ Summary  : 件数などの記録（PSCustomObject）
 
 メッセージは `設定 <Scope>.<Name> は…` の形で、どの値を直せばよいかが分かるようにしています。空の配列が `$null` に化けないよう、値は関数を経由せず直接読んでいます。
 
+## 使われ方と変更の影響
+
+JobKit はすべてのモジュールから使われるため、振る舞いを変えると全体に効きます。
+
+| 関数 | 主に使う場所 | 変えたときの影響 |
+|---|---|---|
+| `Assert-PortShape` / `Get-PortMember` | 各ジョブの `Ports.ps1`、JobHost のサービス、PageBridge のトランスポート | 本物と偽物の両方の検証が変わる。緩めると形のずれを見逃す |
+| `Read-JobSetting` | 各ジョブの `Settings.ps1`、JobHost の Browser / Logging 設定 | 設定の誤りが開始時に見つかるかどうか |
+| `New-JobResult` / `Assert-JobResult` | 各ジョブコマンド、JobHost、JobChains | 連携ジョブが子ジョブの結果を信頼できるかどうか |
+| `Get-PropertyValue` | ほぼすべて | hashtable と PSCustomObject を同じように読む前提が崩れる |
+
+ここに業務の知識・ジョブ固有の名前・I/O を持ち込まないこと（テストで検査）。足したくなったら、その機能はジョブのモジュールか JobHost のサービスに置くべきものです（[design-principles.md](../guides/design-principles.md)）。
+
 ## ファイル構成
 
 | ファイル | 役割 |

@@ -1,6 +1,6 @@
 # アーキテクチャ
 
-この文書は、コードを読む・直す人のための全体像です。個々のファイルの説明は [docs/modules](docs/modules) と [docs/jobs](docs/jobs) にあります。
+この文書は、コードを読む・直す人のための全体像です。個々のファイルの説明は [docs/modules](docs/modules) と [docs/jobs](docs/jobs) に、実行の流れを関数の順に追った説明は [docs/guides/code-walkthrough.md](docs/guides/code-walkthrough.md) に、設計の判断基準は [docs/guides/design-principles.md](docs/guides/design-principles.md) にあります。
 ここに書いた境界のうち機械的に確かめられるものは、[tests/pester/Quality](tests/pester/Quality) のテストで固定しています。境界を変えるときは、先にこの文書と [docs/decisions](docs/decisions) を更新し、テストの規則を同時に直してください。
 
 ## 1. 構成要素と依存の向き
@@ -164,7 +164,12 @@ Flow ──業務の名前──▶ Page ポート ──操作名──▶ Brow
 | `javascript` / `command` | ページ内の例外・CDP コマンドの失敗 | 呼び出し側が判断 |
 | `browser-unreachable` / `configuration` | ブラウザに接続できない・設定やカタログの誤り | 開始前に停止 |
 
-区画単位の処理（チェックの整合、作付け記録の保存）は、1区画の失敗を記録して次へ進みます。ただし通信を続けられない分類のエラーでは即座に止まります。最後に件数と失敗を確かめ、食い違いや失敗が1件でもあれば異常終了します。
+区画単位の処理（チェックの整合、作付け記録の保存）は、1区画の失敗を記録して次へ進みます。最後に件数と失敗を確かめ、食い違いや失敗が1件でもあれば異常終了します。
+
+通信を続けられない分類のエラーの扱いは、ジョブによって違います。
+
+- **チェックの整合（SoilAnalysisTargetSync）**: 区画ごとに `IsFatal` で判定し、その場で走査を止めます。失敗一覧は出力してから止まります。
+- **作付け記録の保存（PlantingRecordExport）**: 区画ごとには判定せず、失敗として記録して次へ進みます。表示中の残りの区画も失敗になったあと、一覧を読み直すところで例外になって止まります（失敗一覧は出力されません）。
 
 ## 9. 連携ジョブ
 

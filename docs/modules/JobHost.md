@@ -57,6 +57,39 @@ Invoke-HostedJob -AppRoot <app> -JobName <ジョブ名> [-SettingsPath] [-Catalo
 - ジョブには `Jobs.<ジョブ名>` の深いコピーを渡します。ジョブが値を書き換えても他のジョブに影響しません。
 - 値の意味（必須か、整数か）は各ジョブが開始時に検証します。実行基盤が検証するのは `Common.Browser` と `Common.Logging` です。
 
+## コードの読み方
+
+`Invoke-HostedJob` の中の順序は [code-walkthrough.md](../guides/code-walkthrough.md#2-実行基盤--設定を読みcontext-を作る) に、関数名つきでまとめてあります。
+
+**サービスの作り方の型**: どのサービスも同じ形で作っています。新しいサービスやメンバーを足すときも、この形にそろえます。
+
+```powershell
+$script:HostFilesShape = @{ EnsureDirectory = @('Path', 'Purpose'); … }      # 1. 形の宣言（ジョブ側の宣言と同じ書き方）
+
+function New-HostFileService {
+    $ensure = Get-Command -Name Initialize-SafeDirectory -CommandType Function   # 2. 使う非公開関数を先に取り出す
+    return [pscustomobject]@{
+        EnsureDirectory = {                                                       # 3. [CmdletBinding()] 付きのメンバー
+            [CmdletBinding()] param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Purpose)
+            & $ensure -Path $Path -Purpose $Purpose
+        }.GetNewClosure()                                                         # 4. 取り出した関数を閉じ込める
+    }
+}
+```
+
+状態を持つサービス（Browser）は、状態を1つのオブジェクト（`$state`）にまとめ、各メンバーがそれを閉じ込めて共有します。モジュール全体の変数（`$script:`）に「今の接続」は置きません。
+
+変更の典型と影響:
+
+| 変えたいこと | 直す場所 | 影響 |
+|---|---|---|
+| サービスにメンバーを足す | 該当する `*Service.ps1` / `*Watcher.ps1` などの形の宣言と実装 | 使うジョブの `Ports.ps1` の形の宣言、テストの偽物（`New-ScriptedPort` の `Parameters`）、[ARCHITECTURE.md](../../ARCHITECTURE.md#3-context-とサービスポート) のサービスの表 |
+| ログの書式・出力先 | `HostLog.ps1` | 運用者が読むログ（[operations.md](../guides/operations.md)） |
+| 安全なパスの規則 | `SafePaths.ps1` | すべてのジョブのファイル操作 |
+| CSV の書式（引用符・改行・文字コード） | `CsvText.ps1`、`FileService.ps1` の `Save-HostCsv` | すべてのジョブの出力ファイル。読む側（Excel など）に影響する |
+| ダウンロード完了の判定 | `DownloadWatcher.ps1` | ブラウザでダウンロードするすべてのジョブ |
+| Context の項目 | `RunContext.ps1` | すべてのジョブ。ARCHITECTURE.md の Context の表 |
+
 ## ファイル構成
 
 | ファイル | 役割 |
