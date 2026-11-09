@@ -1,5 +1,5 @@
 {
-  "name": "greenhouse-ops-automation",
+  "name": "powershell-cdp-jobs",
   "private": true,
   "description": "ブラウザ側スクリプト（app/browser）の単体テスト用。実行時には使用しない。",
   "engines": {

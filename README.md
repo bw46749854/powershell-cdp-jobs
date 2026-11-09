@@ -1,4 +1,4 @@
-# 温室運用の自動化ジョブ（greenhouse-ops-automation）
+# 温室運用の自動化ジョブ（powershell-cdp-jobs）
 
 Web 画面で行っている定型作業を、PowerShell からブラウザを操作して自動化するジョブ群です。
 ブラウザ（Microsoft Edge / Google Chrome）とは Chrome DevTools Protocol（CDP）で通信し、追加のソフトウェアをインストールせずに Windows 標準の Windows PowerShell 5.1 で動きます。

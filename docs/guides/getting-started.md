@@ -33,7 +33,7 @@
 2. **ブラウザをリモートデバッグ付きで起動する** — 例:
 
    ```bat
-   start "" msedge.exe --remote-debugging-port=9222 --user-data-dir="%LOCALAPPDATA%\greenhouse-ops\edge-remote-debugging"
+   start "" msedge.exe --remote-debugging-port=9222 --user-data-dir="%LOCALAPPDATA%\powershell-cdp-jobs\edge-remote-debugging"
    ```
 
    普段使いのプロファイルとは別の `--user-data-dir` を指定してください。同じプロファイルのウィンドウが既に開いていると、ブラウザはデバッグ用ポートを開きません。
